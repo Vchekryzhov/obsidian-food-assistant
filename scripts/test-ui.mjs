@@ -158,14 +158,14 @@ async function openPluginSettings() {
 
 async function enableCommunityPlugins() {
   const pluginId = "food-assistant-module";
-  const trustAuthor = window.getByRole("button", { name: "Trust author and enable plugins" });
-  if (await trustAuthor.isVisible().catch(() => false)) {
-    await trustAuthor.click();
-  }
   await window.waitForFunction(
     (id) => Boolean(window.app.plugins?.manifests?.[id]),
     pluginId
   );
+  const trustAuthor = window.getByRole("button", { name: "Trust author and enable plugins" });
+  if (await trustAuthor.isVisible().catch(() => false)) {
+    await trustAuthor.click();
+  }
   const loaded = await window.evaluate(async (id) => {
     await window.app.plugins.setEnable(true);
     return id in window.app.plugins.plugins;
