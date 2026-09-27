@@ -16,7 +16,8 @@ const projectRoot = path.resolve(import.meta.dirname, "..");
 const resultsDirectory = path.join(projectRoot, "test-results");
 const vaultDirectory = await mkdtemp(path.join(tmpdir(), "food-assistant-ui-vault-"));
 const profileDirectory = await mkdtemp(path.join(tmpdir(), "food-assistant-ui-profile-"));
-const pluginDirectory = path.join(vaultDirectory, ".obsidian", "plugins", "food-assistant-module");
+const pluginId = "food-assistant-module";
+const pluginDirectory = path.join(vaultDirectory, ".obsidian", "plugins", pluginId);
 const consoleMessages = [];
 let app;
 let obsidianProcess;
@@ -31,7 +32,7 @@ try {
   );
   await writeFile(
     path.join(vaultDirectory, ".obsidian", "community-plugins.json"),
-    JSON.stringify(["food-assistant-module"])
+    JSON.stringify([pluginId])
   );
   await writeFile(
     path.join(profileDirectory, "obsidian.json"),
@@ -157,7 +158,6 @@ async function openPluginSettings() {
 }
 
 async function enableCommunityPlugins() {
-  const pluginId = "food-assistant-module";
   await window.waitForFunction(
     (id) => Boolean(window.app.plugins?.manifests?.[id]),
     pluginId
