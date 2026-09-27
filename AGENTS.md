@@ -31,6 +31,12 @@ Use the installed Matt Pocock engineering skills as the default development work
 
 Issues and specs are tracked in GitHub Issues for `Vchekryzhov/obsidian-food-assistant`. See `docs/agents/issue-tracker.md`.
 
+### Delivery completion
+
+- Keep implementation completion and delivery completion separate.
+- Close an issue only after the final changes are committed and the commit is pushed to the remote branch; when the workflow uses a pull request, close it only after the pull request is merged.
+- If the work is only local or uncommitted, leave the issue open and report the remaining delivery step explicitly.
+
 ### Triage labels
 
 Use the default five-role triage vocabulary. See `docs/agents/triage-labels.md`.
