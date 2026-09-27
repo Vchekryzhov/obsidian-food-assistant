@@ -57,6 +57,7 @@ try {
   consoleMessages.push(error instanceof Error ? error.stack ?? error.message : String(error));
   await mkdir(resultsDirectory, { recursive: true });
   if (window) {
+    await captureUiDiagnostics();
     await window.screenshot({ path: path.join(resultsDirectory, "obsidian-ui-failure.png"), fullPage: true }).catch(() => undefined);
   }
   await writeFile(path.join(resultsDirectory, "obsidian-ui.log"), consoleMessages.join("\n"));
@@ -65,6 +66,37 @@ try {
   await closeObsidian();
   await rm(vaultDirectory, { recursive: true, force: true });
   await rm(profileDirectory, { recursive: true, force: true });
+}
+
+async function captureUiDiagnostics() {
+  const diagnostics = await window
+    .evaluate((id) => {
+      const controls = [...document.querySelectorAll("button, [aria-label], [data-tooltip-position]")]
+        .map((element) => {
+          const htmlElement = element;
+          const rect = htmlElement.getBoundingClientRect();
+          return {
+            tag: htmlElement.tagName,
+            className: htmlElement.className,
+            ariaLabel: htmlElement.getAttribute("aria-label"),
+            title: htmlElement.getAttribute("title"),
+            tooltip: htmlElement.getAttribute("data-tooltip-position"),
+            text: htmlElement.textContent?.trim().slice(0, 80) ?? "",
+            visible: rect.width > 0 && rect.height > 0
+          };
+        })
+        .filter((control) => control.ariaLabel || control.title || control.text)
+        .slice(-80);
+      return {
+        settingsCommandIds: Object.keys(window.app?.commands?.commands ?? {}).filter((commandId) => commandId.includes("settings")),
+        settingMethods: Object.keys(window.app?.setting ?? {}),
+        pluginDiscovered: Boolean(window.app?.plugins?.manifests?.[id]),
+        pluginLoaded: Boolean(window.app?.plugins?.plugins?.[id]),
+        controls
+      };
+    }, pluginId)
+    .catch((diagnosticError) => ({ diagnosticError: String(diagnosticError) }));
+  consoleMessages.push(`[food-assistant-ui] ${JSON.stringify(diagnostics)}`);
 }
 
 async function launchObsidian() {
