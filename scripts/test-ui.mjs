@@ -74,11 +74,7 @@ async function launchObsidian() {
   obsidianProcess.stderr.on("data", (data) => consoleMessages.push(data.toString()));
 
   const launched = await connectToObsidian();
-  const launchedWindow = launched.contexts().flatMap((context) => context.pages())[0];
-  if (!launchedWindow) {
-    throw new Error("Obsidian opened without a browser window.");
-  }
-  await launchedWindow.waitForFunction(() => "app" in window);
+  const launchedWindow = await findObsidianWindow(launched);
   return { app: launched, window: launchedWindow };
 }
 
@@ -97,6 +93,22 @@ async function connectToObsidian() {
     }
   }
   throw new Error(`Timed out waiting for Obsidian's debugging port: ${String(lastError)}`);
+}
+
+async function findObsidianWindow(browser) {
+  const deadline = Date.now() + 30_000;
+  let pageUrls = [];
+  while (Date.now() < deadline) {
+    const pages = browser.contexts().flatMap((context) => context.pages());
+    pageUrls = pages.map((page) => page.url());
+    for (const page of pages) {
+      if (await page.evaluate(() => "app" in window).catch(() => false)) {
+        return page;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`Timed out waiting for Obsidian's window. Open pages: ${pageUrls.join(", ")}`);
 }
 
 async function closeObsidian() {
