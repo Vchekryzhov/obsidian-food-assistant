@@ -45,6 +45,7 @@ try {
 
   ({ app, window } = await launchObsidian());
   window.on("console", (message) => consoleMessages.push(`${message.type()}: ${message.text()}`));
+  await enableCommunityPlugins();
   await openPluginSettings();
 
   await assertSettingsVisible();
@@ -139,12 +140,20 @@ async function restartObsidian() {
 }
 
 async function openPluginSettings() {
-  await window.evaluate(() => {
-    const obsidian = window.app;
-    obsidian.setting.open();
-    obsidian.setting.openTabById("food-assistant-module");
+  await window.evaluate(async () => {
+    await window.app.commands.executeCommandById("app:open-settings");
+    window.app.setting?.openTabById("food-assistant-module");
   });
+  await window.getByText("Food Assistant Module", { exact: true }).click();
   await window.getByText("Папка данных", { exact: true }).waitFor();
+}
+
+async function enableCommunityPlugins() {
+  const loaded = await window.evaluate(async (pluginId) => {
+    await window.app.plugins.setEnable(true);
+    return pluginId in window.app.plugins.plugins;
+  }, "food-assistant-module");
+  assert.equal(loaded, true, "Food Assistant Module did not load");
 }
 
 async function assertSettingsVisible() {
