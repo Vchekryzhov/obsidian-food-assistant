@@ -76,7 +76,7 @@ async function launchObsidian() {
       vaultDirectory,
       `--user-data-dir=${profileDirectory}`
     ],
-    { env: process.env }
+    { detached: process.platform !== "win32", env: process.env }
   );
   obsidianProcess.stdout.on("data", (data) => consoleMessages.push(data.toString()));
   obsidianProcess.stderr.on("data", (data) => consoleMessages.push(data.toString()));
@@ -120,10 +120,19 @@ async function findObsidianWindow(browser) {
 }
 
 async function closeObsidian() {
+  const processId = obsidianProcess?.pid;
+  const exited = obsidianProcess?.exitCode === null ? once(obsidianProcess, "exit") : undefined;
   await app?.close().catch(() => undefined);
-  if (obsidianProcess && obsidianProcess.exitCode === null) {
-    const exited = once(obsidianProcess, "exit");
-    obsidianProcess.kill();
+  if (processId) {
+    try {
+      process.kill(process.platform === "win32" ? processId : -processId);
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code !== "ESRCH") {
+        throw error;
+      }
+    }
+  }
+  if (exited) {
     await exited;
   }
   app = undefined;
@@ -189,7 +198,7 @@ async function updateFolderAndRestart(key, rawValue, expectedValue) {
 
 async function installFromSettings() {
   await window.getByRole("button", { name: "Установить / восстановить" }).click();
-  await window.getByText(/Готово:|Модуль уже актуален\.|Установлено:/).waitFor();
+  await window.locator(".setting-item-description").filter({ hasText: /Готово:|Модуль уже актуален\.|Установлено:/ }).waitFor();
   await assert.doesNotReject(() => readFile(path.join(vaultDirectory, "test/food-data/Помощник по еде.md"), "utf8"));
 }
 
