@@ -79,7 +79,7 @@ test("local and CI checks include Obsidian-specific linting and the required UI 
   assert.match(uiTest, /chromium\.connectOverCDP/);
   assert.match(uiTest, /updateDisabled: true/);
   assert.match(uiTest, /setEnable\(true\)/);
-  assert.match(uiTest, /keyboard\.press\("Control\+,"\)/);
+  assert.match(uiTest, /setting\.openTabById\(pluginId\)/);
 });
 
 test("distributable module contains no machine-specific paths or obvious secrets", async () => {
