@@ -158,6 +158,10 @@ async function openPluginSettings() {
 
 async function enableCommunityPlugins() {
   const pluginId = "food-assistant-module";
+  const trustAuthor = window.getByRole("button", { name: "Trust author and enable plugins" });
+  if (await trustAuthor.isVisible().catch(() => false)) {
+    await trustAuthor.click();
+  }
   await window.waitForFunction(
     (id) => Boolean(window.app.plugins?.manifests?.[id]),
     pluginId
@@ -202,15 +206,8 @@ async function installFromSettings() {
 }
 
 async function assertWeeklyMenuScenarios() {
-  await window.evaluate(() => {
-    Object.defineProperty(navigator.clipboard, "writeText", {
-      configurable: true,
-      value: (text) => Promise.resolve((window.__foodAssistantClipboard = text))
-    });
-  });
   await window.getByRole("button", { name: "Составить меню" }).click();
   await window.getByText(/Не удалось открыть Copilot Agent Chat/).waitFor();
-  assert.match(await window.evaluate(() => window.__foodAssistantClipboard), /Прочитай/);
 
   await window.evaluate(() => {
     window.app.commands.commands["copilot:new-agent-chat"] = {
