@@ -153,7 +153,6 @@ async function openPluginSettings() {
     await window.app.commands.executeCommandById("app:open-settings");
     window.app.setting?.openTabById("food-assistant-module");
   });
-  await window.locator(".vertical-tab-nav-item-title").filter({ hasText: "Food Assistant Module" }).click();
   await window.getByText("Папка данных", { exact: true }).waitFor();
 }
 
@@ -204,9 +203,9 @@ async function installFromSettings() {
 
 async function assertWeeklyMenuScenarios() {
   await window.evaluate(() => {
-    Object.defineProperty(navigator, "clipboard", {
+    Object.defineProperty(navigator.clipboard, "writeText", {
       configurable: true,
-      value: { writeText: (text) => Promise.resolve((window.__foodAssistantClipboard = text)) }
+      value: (text) => Promise.resolve((window.__foodAssistantClipboard = text))
     });
   });
   await window.getByRole("button", { name: "Составить меню" }).click();
