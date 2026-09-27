@@ -149,7 +149,7 @@ async function restartObsidian() {
 
 async function openPluginSettings() {
   await enableCommunityPlugins();
-  await window.getByLabel("Open settings", { exact: true }).click();
+  await window.keyboard.press("Control+,");
   await window.locator(".vertical-tab-nav-item-title").filter({ hasText: "Food Assistant Module" }).click();
   await window.getByText("Папка данных", { exact: true }).waitFor();
 }
