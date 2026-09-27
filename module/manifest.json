@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "id": "food-assistant",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Помощник по еде",
   "author": "Vchekryzhov",
-  "defaultDataRoot": "Питание",
-  "defaultModuleRoot": "modules/Еда",
+  "defaultDataRoot": "solidalarm/Питание",
+  "defaultModuleRoot": "solidalarm/Питание/Еда",
   "optionalDependencies": [
     {
       "id": "dataview",

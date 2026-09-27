@@ -1,7 +1,7 @@
 {
   "id": "food-assistant-module",
   "name": "Food Assistant Module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minAppVersion": "1.11.4",
   "description": "Installs a local-first food assistant module for recipes, inventory, menus, and shopping.",
   "author": "Vchekryzhov",

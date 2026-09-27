@@ -1,4 +1,4 @@
-import moduleManifest from "../module/manifest.json";
+import moduleManifest from "../module/manifest.json" with { type: "json" };
 import moduleInstructions from "../module/instructions/Еда.md";
 import weeklyMenuSkill from "../module/skills/weekly-menu/SKILL.md";
 import inventorySkill from "../module/skills/inventory-maintenance/SKILL.md";
