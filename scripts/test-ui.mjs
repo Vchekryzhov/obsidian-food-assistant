@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { tmpdir } from "node:os";
-import { _electron as electron } from "playwright";
+import { chromium } from "playwright";
 
 const executablePath = process.env.OBSIDIAN_UI_EXECUTABLE;
 if (!executablePath) {
@@ -17,6 +19,7 @@ const profileDirectory = await mkdtemp(path.join(tmpdir(), "food-assistant-ui-pr
 const pluginDirectory = path.join(vaultDirectory, ".obsidian", "plugins", "food-assistant-module");
 const consoleMessages = [];
 let app;
+let obsidianProcess;
 let window;
 
 try {
@@ -30,6 +33,7 @@ try {
     path.join(vaultDirectory, ".obsidian", "community-plugins.json"),
     JSON.stringify(["food-assistant-module"])
   );
+  await writeFile(path.join(profileDirectory, "obsidian.json"), JSON.stringify({ updateDisabled: true }));
 
   ({ app, window } = await launchObsidian());
   window.on("console", (message) => consoleMessages.push(`${message.type()}: ${message.text()}`));
@@ -49,19 +53,69 @@ try {
   await writeFile(path.join(resultsDirectory, "obsidian-ui.log"), consoleMessages.join("\n"));
   throw error;
 } finally {
-  await app?.close();
+  await closeObsidian();
   await rm(vaultDirectory, { recursive: true, force: true });
   await rm(profileDirectory, { recursive: true, force: true });
 }
 
 async function launchObsidian() {
-  const launched = await electron.launch({
+  obsidianProcess = spawn(
     executablePath,
-    args: ["--no-sandbox", "--disable-gpu", vaultDirectory, `--user-data-dir=${profileDirectory}`]
-  });
-  const launchedWindow = await launched.firstWindow();
+    [
+      "--no-sandbox",
+      "--disable-gpu",
+      "--remote-debugging-port=9222",
+      vaultDirectory,
+      `--user-data-dir=${profileDirectory}`
+    ],
+    { env: process.env }
+  );
+  obsidianProcess.stdout.on("data", (data) => consoleMessages.push(data.toString()));
+  obsidianProcess.stderr.on("data", (data) => consoleMessages.push(data.toString()));
+
+  const launched = await connectToObsidian();
+  const launchedWindow = launched.contexts().flatMap((context) => context.pages())[0];
+  if (!launchedWindow) {
+    throw new Error("Obsidian opened without a browser window.");
+  }
   await launchedWindow.waitForFunction(() => "app" in window);
   return { app: launched, window: launchedWindow };
+}
+
+async function connectToObsidian() {
+  const deadline = Date.now() + 30_000;
+  let lastError;
+  while (Date.now() < deadline) {
+    if (obsidianProcess.exitCode !== null) {
+      throw new Error(`Obsidian exited before opening its debugging port: ${consoleMessages.join("\n")}`);
+    }
+    try {
+      return await chromium.connectOverCDP("http://127.0.0.1:9222", { timeout: 1_000 });
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+  throw new Error(`Timed out waiting for Obsidian's debugging port: ${String(lastError)}`);
+}
+
+async function closeObsidian() {
+  await app?.close().catch(() => undefined);
+  if (obsidianProcess && obsidianProcess.exitCode === null) {
+    const exited = once(obsidianProcess, "exit");
+    obsidianProcess.kill();
+    await exited;
+  }
+  app = undefined;
+  obsidianProcess = undefined;
+  window = undefined;
+}
+
+async function restartObsidian() {
+  await closeObsidian();
+  ({ app, window } = await launchObsidian());
+  window.on("console", (message) => consoleMessages.push(`${message.type()}: ${message.text()}`));
+  await openPluginSettings();
 }
 
 async function openPluginSettings() {
@@ -95,10 +149,7 @@ async function updateFolderAndRestart(key, rawValue, expectedValue) {
     },
     { pluginId: "food-assistant-module", settingKey: key, settingValue: expectedValue }
   );
-  await app.close();
-  ({ app, window } = await launchObsidian());
-  window.on("console", (message) => consoleMessages.push(`${message.type()}: ${message.text()}`));
-  await openPluginSettings();
+  await restartObsidian();
   await assert.equal(await window.locator("input[type=text]").nth(index).inputValue(), expectedValue);
 }
 
