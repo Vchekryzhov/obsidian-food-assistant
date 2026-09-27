@@ -1,0 +1,11 @@
+.food-assistant-status {
+  margin-top: var(--size-4-3);
+  color: var(--text-muted);
+}
+
+.food-assistant-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-3);
+}

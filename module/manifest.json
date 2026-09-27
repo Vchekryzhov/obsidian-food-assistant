@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "food-assistant",
+  "version": "0.1.0",
+  "displayName": "Помощник по еде",
+  "author": "Vchekryzhov",
+  "defaultDataRoot": "Питание",
+  "defaultModuleRoot": "modules/Еда",
+  "optionalDependencies": [
+    {
+      "id": "dataview",
+      "purpose": "Живые каталоги рецептов и продуктов"
+    },
+    {
+      "id": "copilot",
+      "purpose": "Чат с Codex внутри Obsidian"
+    }
+  ],
+  "dataPolicy": {
+    "managedInstructionsMayUpdate": true,
+    "userDataMayBeOverwritten": false,
+    "uninstallPreservesUserData": true
+  }
+}
