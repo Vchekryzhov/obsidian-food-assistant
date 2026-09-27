@@ -72,8 +72,8 @@ test("local and CI checks include Obsidian-specific linting and the required UI 
   assert.match(packageJson.scripts.lint, /eslint src/);
   assert.match(packageJson.scripts.check, /npm run lint/);
   assert.match(packageJson.scripts["test:ui"], /scripts\/test-ui\.mjs/);
-  assert.match(uiWorkflow, /obsidian-version: \["1\.11\.4", "1\.13\.8"\]/);
-  assert.match(uiWorkflow, /releases\/download\/\$\{\{ matrix\.obsidian-version \}\}/);
+  assert.match(uiWorkflow, /obsidian-version: \["1\.11\.4", "1\.13\.7"\]/);
+  assert.match(uiWorkflow, /releases\/download\/v\$\{\{ matrix\.obsidian-version \}\}/);
   assert.match(uiWorkflow, /xvfb-run --auto-servernum npm run test:ui/);
 });
 

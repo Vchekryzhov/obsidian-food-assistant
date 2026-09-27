@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        obsidian-version: ["1.11.4", "1.13.8"]
+        obsidian-version: ["1.11.4", "1.13.7"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,7 +25,7 @@ jobs:
       - name: Download Obsidian
         run: |
           curl --fail --location --retry 3 \
-            "https://github.com/obsidianmd/obsidian-releases/releases/download/${{ matrix.obsidian-version }}/Obsidian-${{ matrix.obsidian-version }}.AppImage" \
+            "https://github.com/obsidianmd/obsidian-releases/releases/download/v${{ matrix.obsidian-version }}/Obsidian-${{ matrix.obsidian-version }}.AppImage" \
             --output "$RUNNER_TEMP/Obsidian.AppImage"
           chmod +x "$RUNNER_TEMP/Obsidian.AppImage"
       - name: Test built plugin in Obsidian
