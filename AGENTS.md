@@ -23,6 +23,10 @@ When changing installation semantics, add or update tests for first install, rep
 
 ## Agent skills
 
+### Development workflow
+
+Use the installed Matt Pocock engineering skills as the default development workflow. Start with `ask-matt` when routing is unclear; use `to-spec` and `to-tickets` for planning, `implement` or `implement-spec` with `tdd` for delivery, `diagnosing-bugs` for failures, `code-review` for reviews, and `codebase-design` or `domain-modeling` for architecture and domain changes. Read and follow the selected skill before acting.
+
 ### Issue tracker
 
 Issues and specs are tracked in GitHub Issues for `Vchekryzhov/obsidian-food-assistant`. See `docs/agents/issue-tracker.md`.
