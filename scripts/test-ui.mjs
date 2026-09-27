@@ -41,6 +41,7 @@ try {
   await installFromSettings();
   await assertWeeklyMenuScenarios();
 } catch (error) {
+  consoleMessages.push(error instanceof Error ? error.stack ?? error.message : String(error));
   await mkdir(resultsDirectory, { recursive: true });
   if (window) {
     await window.screenshot({ path: path.join(resultsDirectory, "obsidian-ui-failure.png"), fullPage: true }).catch(() => undefined);
@@ -56,7 +57,7 @@ try {
 async function launchObsidian() {
   const launched = await electron.launch({
     executablePath,
-    args: [vaultDirectory, `--user-data-dir=${profileDirectory}`, "--no-sandbox"]
+    args: ["--no-sandbox", "--disable-gpu", vaultDirectory, `--user-data-dir=${profileDirectory}`]
   });
   const launchedWindow = await launched.firstWindow();
   await launchedWindow.waitForFunction(() => "app" in window);

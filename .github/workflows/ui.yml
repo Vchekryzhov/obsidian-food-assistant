@@ -30,6 +30,7 @@ jobs:
           chmod +x "$RUNNER_TEMP/Obsidian.AppImage"
       - name: Test built plugin in Obsidian
         env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
           OBSIDIAN_UI_EXECUTABLE: ${{ runner.temp }}/Obsidian.AppImage
         run: xvfb-run --auto-servernum npm run test:ui
       - name: Upload UI diagnostics
@@ -37,4 +38,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: obsidian-ui-${{ matrix.obsidian-version }}
-          path: test-results/
+          path: test-results/**
