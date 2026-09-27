@@ -20,3 +20,17 @@ npm run check
 ```
 
 When changing installation semantics, add or update tests for first install, repeat install, local edits, and pre-existing files.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked in GitHub Issues for `Vchekryzhov/obsidian-food-assistant`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default five-role triage vocabulary. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repository with `CONTEXT.md` at the root and ADRs under `docs/adr/`. See `docs/agents/domain.md`.
