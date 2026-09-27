@@ -1,4 +1,20 @@
-# Obsidian Food Assistant
+# Food Assistant Module
+
+## English
+
+Food Assistant Module is a local-first Obsidian plugin for recipes, product cards, manual inventory, weekly menus, consumption history, and shopping lists. It installs a food-assistant module into your vault and opens Copilot Agent Chat with a prepared weekly-menu prompt. The plugin does not insert or send that prompt: you paste and send it yourself.
+
+The module's scenarios and instructions are currently in Russian. It requires Obsidian desktop 1.11.4 or later. Copilot and Dataview are separate community plugins that must be installed and configured independently.
+
+### Install
+
+Install the three release assets — `main.js`, `manifest.json`, and `styles.css` — into `.obsidian/plugins/food-assistant-module/`, restart Obsidian, enable **Food Assistant Module**, and select **Install / repair** in the plugin settings. You can then use the ribbon button or the **Food Assistant Module: Create weekly menu** command.
+
+### Data safety and Copilot
+
+The installer updates its managed instructions only when they have not been edited locally. It never overwrites recipes, products, inventory, menus, or history, and removing the plugin does not remove vault data. Starting a weekly menu replaces the clipboard contents with the generated prompt after your explicit action; the plugin never reads previous clipboard contents. If clipboard access is unavailable, the prompt remains visible in the notification for manual copying. Copilot is opened through its public command; if it is unavailable, the notification explains how to continue manually.
+
+## Русский
 
 Локальный помощник по еде для Obsidian: рецепты, карточки продуктов, ручной инвентарь, недельное меню, история расхода и список покупок. Агент работает через Copilot Agent Chat с Codex и подпиской ChatGPT; отдельный OpenAI API key модулю не нужен.
 
@@ -91,6 +107,10 @@ npm run build
 ```
 
 Полная проверка: `npm run check`.
+
+### UI-проверка
+
+`npm run test:ui` запускает собранный плагин в отдельном временном vault и профиле Obsidian. Укажите `OBSIDIAN_UI_EXECUTABLE` — путь к исполняемому файлу проверяемого Obsidian. Команда не использует уже открытый Obsidian или личный vault; при сбое сохраняет скриншот и логи в `test-results/`. CI запускает её для Obsidian 1.11.4 и 1.13.8.
 
 Для релиза приложите к GitHub Release три файла:
 

@@ -61,7 +61,7 @@ test("the factory builds the complete default package with ownership policies", 
   const modulePackage = createFoodModulePackage(DEFAULT_PATHS);
 
   assert.equal(modulePackage.id, "food-assistant");
-  assert.equal(modulePackage.version, "0.2.0");
+  assert.equal(modulePackage.version, "0.2.1");
   assert.equal(modulePackage.displayName, "Помощник по еде");
   assert.deepEqual(
     modulePackage.files.map(({ path, policy }) => ({ path, policy })),

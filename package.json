@@ -1,6 +1,6 @@
 {
   "name": "obsidian-food-assistant",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "A distributable local-first food assistant module for Obsidian and Codex.",
   "author": "Vchekryzhov",
@@ -15,13 +15,19 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "lint": "eslint src",
     "test": "node --experimental-strip-types --import ./test/register-md-loader.mjs --test test/*.test.ts",
-    "check": "npm run test && npm run build"
+    "test:ui": "node scripts/test-ui.mjs",
+    "check": "npm run lint && npm run test && npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "esbuild": "^0.25.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-obsidianmd": "^0.4.2",
     "obsidian": "^1.11.4",
-    "typescript": "^5.9.0"
+    "playwright": "^1.63.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.70.1"
   }
 }

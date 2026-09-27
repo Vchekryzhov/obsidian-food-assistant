@@ -13,8 +13,9 @@ import {
   weeklyMenuPrompt,
   type FoodModulePaths
 } from "./package-content.ts";
+import type { SettingDefinitionItem } from "obsidian";
 
-interface FoodAssistantSettings extends FoodModulePaths {}
+type FoodAssistantSettings = FoodModulePaths;
 
 const DEFAULT_SETTINGS: FoodAssistantSettings = { ...DEFAULT_PATHS };
 
@@ -117,12 +118,85 @@ class FoodAssistantSettingTab extends PluginSettingTab {
   }
 
   display(): void {
+    this.renderLegacySettings();
+  }
+
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [
+      {
+        type: "group",
+        heading: "Помощник по еде",
+        items: [
+          {
+            name: "Папка данных",
+            desc: "Здесь хранятся рецепты, продукты, меню и история.",
+            control: {
+              type: "text",
+              key: "dataRoot",
+              placeholder: DEFAULT_PATHS.dataRoot
+            }
+          },
+          {
+            name: "Папка инструкций",
+            desc: "Маршрутизатор и skills для агента.",
+            control: {
+              type: "text",
+              key: "moduleRoot",
+              placeholder: DEFAULT_PATHS.moduleRoot
+            }
+          }
+        ]
+      },
+      {
+        name: "Установка",
+        desc: "Установите модуль или восстановите его управляемые инструкции.",
+        render: (setting) => {
+          setting.addButton((button) =>
+            button.setButtonText("Установить / восстановить").setCta().onClick(async () => {
+              await this.plugin.installOrRepair();
+              this.refreshAfterAction();
+            })
+          );
+        }
+      },
+      {
+        name: "Запуск",
+        desc: "Откройте помощник и подготовьте запрос для недельного меню.",
+        render: (setting) => {
+          setting.addButton((button) =>
+            button.setButtonText("Составить меню").onClick(async () => {
+              await this.plugin.startWeeklyMenu();
+            })
+          );
+        }
+      },
+      {
+        name: "Статус",
+        desc: this.plugin.lastStatus,
+        searchable: false
+      }
+    ];
+  }
+
+  getControlValue(key: string): unknown {
+    return isFoodAssistantSettingKey(key) ? this.plugin.settings[key] : undefined;
+  }
+
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    if (!isFoodAssistantSettingKey(key) || typeof value !== "string") {
+      return;
+    }
+    this.plugin.settings[key] = value.trim();
+    await this.plugin.saveSettings();
+  }
+
+  private renderLegacySettings(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Помощник по еде" });
-    containerEl.createEl("p", {
-      text: "Установщик обновляет только свои инструкции. Рецепты, продукты, инвентарь, меню и историю он не перезаписывает."
-    });
+    new Setting(containerEl)
+      .setName("Помощник по еде")
+      .setHeading()
+      .setDesc("Установщик обновляет только свои инструкции. Рецепты, продукты, инвентарь, меню и историю он не перезаписывает.");
 
     new Setting(containerEl)
       .setName("Папка данных")
@@ -156,7 +230,7 @@ class FoodAssistantSettingTab extends PluginSettingTab {
       .addButton((button) =>
         button.setButtonText("Установить / восстановить").setCta().onClick(async () => {
           await this.plugin.installOrRepair();
-          this.display();
+          this.refreshAfterAction();
         })
       );
     new Setting(actions)
@@ -167,11 +241,21 @@ class FoodAssistantSettingTab extends PluginSettingTab {
         })
       );
 
-    containerEl.createDiv({
-      cls: "food-assistant-status",
-      text: this.plugin.lastStatus
-    });
+    new Setting(containerEl).setName("Статус").setDesc(this.plugin.lastStatus);
   }
+
+  private refreshAfterAction(): void {
+    const compatibleTab = this as unknown as { update?: () => void };
+    if (typeof compatibleTab.update === "function") {
+      compatibleTab.update();
+      return;
+    }
+    this.renderLegacySettings();
+  }
+}
+
+function isFoodAssistantSettingKey(key: string): key is keyof FoodAssistantSettings {
+  return key === "dataRoot" || key === "moduleRoot";
 }
 
 function executeObsidianCommand(app: App, commandId: string): boolean {

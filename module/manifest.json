@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "food-assistant",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "displayName": "Помощник по еде",
   "author": "Vchekryzhov",
   "defaultDataRoot": "solidalarm/Питание",

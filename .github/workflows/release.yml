@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  attestations: write
+  id-token: write
 
 jobs:
   release:
@@ -21,12 +23,21 @@ jobs:
       - run: npm run check
       - name: Verify tag matches manifest
         run: test "${GITHUB_REF_NAME}" = "$(node -p "require('./manifest.json').version")"
-      - name: Package release
-        run: zip food-assistant-module-${GITHUB_REF_NAME}.zip main.js manifest.json styles.css
+      - name: Attest release binaries
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            styles.css
       - uses: softprops/action-gh-release@v2
         with:
+          body: |
+            ## 0.2.1
+
+            - Restores standard settings UI and adds searchable folder settings on Obsidian 1.13+.
+            - Keeps the compatible settings fallback for Obsidian 1.11.4.
+            - Documents clipboard behavior and publishes only supported plugin assets.
           files: |
             main.js
             manifest.json
             styles.css
-            food-assistant-module-${{ github.ref_name }}.zip

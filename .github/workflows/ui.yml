@@ -1,0 +1,40 @@
+name: Obsidian UI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  ui:
+    name: Obsidian ${{ matrix.obsidian-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        obsidian-version: ["1.11.4", "1.13.8"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Download Obsidian
+        run: |
+          curl --fail --location --retry 3 \
+            "https://github.com/obsidianmd/obsidian-releases/releases/download/${{ matrix.obsidian-version }}/Obsidian-${{ matrix.obsidian-version }}.AppImage" \
+            --output "$RUNNER_TEMP/Obsidian.AppImage"
+          chmod +x "$RUNNER_TEMP/Obsidian.AppImage"
+      - name: Test built plugin in Obsidian
+        env:
+          OBSIDIAN_UI_EXECUTABLE: ${{ runner.temp }}/Obsidian.AppImage
+        run: xvfb-run --auto-servernum npm run test:ui
+      - name: Upload UI diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: obsidian-ui-${{ matrix.obsidian-version }}
+          path: test-results/
