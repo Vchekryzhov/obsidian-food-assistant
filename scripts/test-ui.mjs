@@ -144,7 +144,7 @@ async function openPluginSettings() {
     await window.app.commands.executeCommandById("app:open-settings");
     window.app.setting?.openTabById("food-assistant-module");
   });
-  await window.getByText("Food Assistant Module", { exact: true }).click();
+  await window.locator(".vertical-tab-nav-item-title").filter({ hasText: "Food Assistant Module" }).click();
   await window.getByText("Папка данных", { exact: true }).waitFor();
 }
 
