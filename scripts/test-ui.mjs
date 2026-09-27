@@ -163,9 +163,10 @@ async function enableCommunityPlugins() {
     pluginId
   );
   const trustAuthor = window.getByRole("button", { name: "Trust author and enable plugins" });
-  if (await trustAuthor.isVisible().catch(() => false)) {
-    await trustAuthor.click();
-  }
+  await trustAuthor
+    .waitFor({ state: "visible", timeout: 5_000 })
+    .then(() => trustAuthor.click())
+    .catch(() => undefined);
   const loaded = await window.evaluate(async (id) => {
     await window.app.plugins.setEnable(true);
     return id in window.app.plugins.plugins;
