@@ -33,7 +33,15 @@ try {
     path.join(vaultDirectory, ".obsidian", "community-plugins.json"),
     JSON.stringify(["food-assistant-module"])
   );
-  await writeFile(path.join(profileDirectory, "obsidian.json"), JSON.stringify({ updateDisabled: true }));
+  await writeFile(
+    path.join(profileDirectory, "obsidian.json"),
+    JSON.stringify({
+      updateDisabled: true,
+      vaults: {
+        foodAssistantUi: { path: vaultDirectory, open: true, ts: Date.now() }
+      }
+    })
+  );
 
   ({ app, window } = await launchObsidian());
   window.on("console", (message) => consoleMessages.push(`${message.type()}: ${message.text()}`));
