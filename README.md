@@ -29,6 +29,18 @@
 
 Copilot и Dataview не включены в этот пакет и устанавливаются отдельно.
 
+## Быстрая установка beta через BRAT
+
+Пока плагин проходит проверку Community directory, его можно установить из публичного GitHub-репозитория:
+
+1. Установите community plugin **BRAT** в тестовый vault.
+2. Откройте настройки BRAT и выберите **Add beta plugin**.
+3. Вставьте `https://github.com/Vchekryzhov/obsidian-food-assistant`.
+4. Включите **Food Assistant Module** в списке Community plugins.
+5. Откройте настройки плагина и нажмите **Установить / восстановить**.
+
+BRAT будет брать сборку из GitHub Release с версией, совпадающей с `manifest.json`.
+
 ## Ручная установка MVP
 
 1. Соберите проект командой `npm ci && npm run build`.
