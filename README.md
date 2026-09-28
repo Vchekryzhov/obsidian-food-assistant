@@ -6,6 +6,10 @@ Food Assistant Module is a local-first Obsidian plugin for recipes, product card
 
 The module's scenarios and instructions are currently in Russian. It requires Obsidian desktop 1.11.4 or later. Copilot and Dataview are separate community plugins that must be installed and configured independently.
 
+### About the food module
+
+The module is a set of Markdown instructions and working notes, not a separate service. By default it lives in `solidalarm/Питание/` inside your vault. It includes two agent modes: `weekly-menu` for a seven-day plan, recipe drafts, and menu history; and `inventory-maintenance` for confirmed purchases, consumption, waste, and stock corrections. Your recipes and product cards are created as you use the assistant; the package includes empty working notes and card templates, not a ready-made recipe database.
+
 ### Install
 
 Install the three release assets — `main.js`, `manifest.json`, and `styles.css` — into `.obsidian/plugins/food-assistant-module/`, restart Obsidian, enable **Food Assistant Module**, and select **Install / repair** in the plugin settings. You can then use the ribbon button or the **Food Assistant Module: Create weekly menu** command.
@@ -16,12 +20,43 @@ The installer updates its managed instructions only when they have not been edit
 
 ## Русский
 
+## Как это работает
+
+Это помощник внутри Obsidian. Плагин один раз раскладывает в vault инструкции и шаблоны, а Copilot Agent Chat читает их и работает с вашими заметками: рецептами, продуктами, инвентарём, меню и покупками. Плагин открывает чат и копирует стартовый запрос в буфер обмена; его нужно вставить и отправить самостоятельно.
+
+Основные сценарии:
+
+- **Составить меню на неделю.** Помощник задаёт несколько вопросов, смотрит на ваши продукты и рецепты, сохраняет текущий план и его историю, а затем предлагает собрать список покупок. Сам план не считается приготовлением и не уменьшает остатки.
+- **Купить, приготовить или выбросить продукт.** После вашего подтверждения помощник записывает событие в историю и обновляет инвентарь. Предположения не превращаются в фактический остаток.
+- **Добавить рецепт или продукт.** Помощник создаёт или дополняет карточку, а Dataview показывает её в каталоге.
+- **Собрать список покупок.** В список попадают продукты, которых не хватает для меню или которые скоро закончатся. При подключённом инструменте магазина можно найти товары и подготовить корзину, но ссылка на корзину не оформляет заказ.
+- **Обновить или восстановить модуль.** Плагин обновляет только свои инструкции и неизменённые управляемые файлы; ваши рецепты, продукты, меню и историю не перезаписываются.
+
 Локальный помощник по еде для Obsidian: рецепты, карточки продуктов, ручной инвентарь, недельное меню, история расхода и список покупок. Агент работает через Copilot Agent Chat с Codex и подпиской ChatGPT; отдельный OpenAI API key модулю не нужен.
 
 Проект состоит из двух частей:
 
 - Obsidian-плагин устанавливает, проверяет и запускает модуль;
 - `module/` содержит переносимые инструкции, skills и начальные шаблоны.
+
+## О модуле «Питание»
+
+Модуль — не отдельная программа или фоновая служба, а набор Markdown-инструкций и рабочих заметок внутри vault. По умолчанию он находится в `solidalarm/Питание/`. Плагин доставляет эти файлы, а агент в Copilot выполняет описанные в них сценарии.
+
+В модуль входят два режима:
+
+- [Меню на неделю](module/skills/weekly-menu/SKILL.md) (`weekly-menu`) — короткое интервью, план на семь дней с учётом запасов и предпочтений, черновики новых рецептов и сохранение каждой версии меню в историю.
+- [Актуализация инвентаря](module/skills/inventory-maintenance/SKILL.md) (`inventory-maintenance`) — один полезный уточняющий вопрос, подтверждённые покупки, расход, порча и корректировки остатков. После подтверждения агент сначала записывает событие в историю, затем меняет инвентарь.
+
+[Основная инструкция](module/instructions/Еда.md) связывает оба режима с каталогами, текущим меню, инвентарём и списком покупок. Рецепты хранятся в отдельных карточках в `Рецепты/`, продукты — в `Продукты/`; Dataview-каталоги показывают эти карточки, а не заменяют их. Карточки создаются по мере работы: готовая база рецептов и продуктов в пакет не входит.
+
+### Как начать работу с модулем
+
+1. Нажмите **Установить / восстановить** в настройках плагина.
+2. Нажмите иконку приборов и вставьте скопированный запрос в открывшийся Copilot Agent Chat.
+3. Отправьте запрос и ответьте на короткое интервью. Проверьте предложенный план перед его подтверждением.
+
+Для других задач можно написать в Agent Chat: «Прочитай [[solidalarm/Питание/Еда]] и проверь мой инвентарь» или «Прочитай [[solidalarm/Питание/Еда]] и собери список покупок по текущему меню». Если пути изменены в настройках, используйте свою ссылку на инструкцию.
 
 ## Что получает пользователь
 
