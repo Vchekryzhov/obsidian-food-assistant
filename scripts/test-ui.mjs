@@ -350,17 +350,28 @@ async function installFromSettings() {
 async function assertWeeklyMenuScenarios() {
   await window.bringToFront();
   await window.waitForFunction(() => document.hasFocus());
-  await window.evaluate(() => {
+  const clipboardProbe = await window.evaluate(() => {
     window.__foodAssistantClipboard = { writes: [], reject: false };
     window.__foodAssistantCopilotCalls = 0;
     // Focus the main window before accessing the host's clipboard getter.
     // Obsidian forwards this object's methods when a popout gains focus.
-    navigator.clipboard.writeText = async (text) => {
+    const clipboard = navigator.clipboard;
+    const stub = async (text) => {
       const state = window.__foodAssistantClipboard;
       if (state.reject) throw new Error("Synthetic clipboard rejection");
       state.writes.push(text);
     };
+    clipboard.writeText = stub;
+    return {
+      sameNavigator: navigator === window.navigator,
+      activeWindowIsMain: window.activeWindow === window,
+      storedStub: clipboard.writeText === stub,
+      getterRetainsStub: navigator.clipboard.writeText === stub,
+      descriptor: Object.getOwnPropertyDescriptor(clipboard, "writeText"),
+      navigatorDescriptor: Object.getOwnPropertyDescriptor(navigator, "clipboard")
+    };
   });
+  consoleMessages.push(`[DEBUG-clipboard] ${JSON.stringify(clipboardProbe)}`);
   assert.deepEqual(await window.evaluate(() => window.__foodAssistantClipboard.writes), []);
   await settingsWindow.getByRole("button", { name: "Составить меню", exact: true }).click();
   await waitForNotice(/Не удалось открыть Copilot Agent Chat/);
