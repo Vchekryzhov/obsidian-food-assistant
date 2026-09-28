@@ -349,16 +349,13 @@ async function assertWeeklyMenuScenarios() {
   await window.evaluate(() => {
     window.__foodAssistantClipboard = { writes: [], reject: false };
     window.__foodAssistantCopilotCalls = 0;
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: {
-        writeText: async (text) => {
-          const state = window.__foodAssistantClipboard;
-          if (state.reject) throw new Error("Synthetic clipboard rejection");
-          state.writes.push(text);
-        }
-      }
-    });
+    // Obsidian owns a non-configurable navigator.clipboard getter and delegates
+    // writes to Electron. Stub that OS boundary, including across popout focus.
+    window.electron.clipboard.writeText = (text) => {
+      const state = window.__foodAssistantClipboard;
+      if (state.reject) throw new Error("Synthetic clipboard rejection");
+      state.writes.push(text);
+    };
   });
   assert.deepEqual(await window.evaluate(() => window.__foodAssistantClipboard.writes), []);
   await settingsWindow.getByRole("button", { name: "Составить меню", exact: true }).click();

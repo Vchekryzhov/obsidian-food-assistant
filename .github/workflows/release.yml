@@ -36,6 +36,7 @@ jobs:
 
             - Restores standard settings UI and adds searchable folder settings on Obsidian 1.13+.
             - Keeps the compatible settings fallback for Obsidian 1.11.4.
+            - Fixes repeat installation by reading hidden installation state through the Adapter API.
             - Documents clipboard behavior and publishes only supported plugin assets.
           files: |
             main.js
