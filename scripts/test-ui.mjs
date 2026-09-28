@@ -348,9 +348,9 @@ async function installFromSettings() {
 }
 
 async function assertWeeklyMenuScenarios() {
-  await window.bringToFront();
-  await window.waitForFunction(() => document.hasFocus());
-  const clipboardProbe = await window.evaluate(() => {
+  await window.evaluate(() => window.electronWindow.focus());
+  await window.waitForFunction(() => window.activeWindow === window);
+  const clipboardStubInstalled = await window.evaluate(() => {
     window.__foodAssistantClipboard = { writes: [], reject: false };
     window.__foodAssistantCopilotCalls = 0;
     // Focus the main window before accessing the host's clipboard getter.
@@ -362,16 +362,9 @@ async function assertWeeklyMenuScenarios() {
       state.writes.push(text);
     };
     clipboard.writeText = stub;
-    return {
-      sameNavigator: navigator === window.navigator,
-      activeWindowIsMain: window.activeWindow === window,
-      storedStub: clipboard.writeText === stub,
-      getterRetainsStub: navigator.clipboard.writeText === stub,
-      descriptor: Object.getOwnPropertyDescriptor(clipboard, "writeText"),
-      navigatorDescriptor: Object.getOwnPropertyDescriptor(navigator, "clipboard")
-    };
+    return navigator.clipboard.writeText === stub;
   });
-  consoleMessages.push(`[DEBUG-clipboard] ${JSON.stringify(clipboardProbe)}`);
+  assert.equal(clipboardStubInstalled, true, "Host must retain the test clipboard boundary");
   assert.deepEqual(await window.evaluate(() => window.__foodAssistantClipboard.writes), []);
   await settingsWindow.getByRole("button", { name: "Составить меню", exact: true }).click();
   await waitForNotice(/Не удалось открыть Copilot Agent Chat/);
