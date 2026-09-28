@@ -432,7 +432,7 @@ async function assertInstallOwnership() {
     await vault.adapter.write(statePath, JSON.stringify(state));
   }, managedPath);
   await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
-  await settingsWindow.getByText("Готово: создано 0, обновлено 1.", { exact: true }).waitFor();
+  await settingsWindow.locator(".setting-item-description").filter({ hasText: "Готово: создано 0, обновлено 1." }).waitFor();
   assert.equal(await readFile(path.join(vaultDirectory, managedPath), "utf8"), expectedInstructions);
 
   await window.evaluate(async ({ managedPath, userPath }) => {
@@ -441,7 +441,7 @@ async function assertInstallOwnership() {
     await vault.modify(vault.getAbstractFileByPath(userPath), "Synthetic user inventory\n");
   }, { managedPath, userPath });
   await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
-  await settingsWindow.getByText(`Установлено: 0. Не перезаписаны изменённые файлы: ${managedPath}.`, { exact: true }).waitFor();
+  await settingsWindow.locator(".setting-item-description").filter({ hasText: `Установлено: 0. Не перезаписаны изменённые файлы: ${managedPath}.` }).waitFor();
   assert.equal(await readFile(path.join(vaultDirectory, managedPath), "utf8"), "Synthetic local instructions\n");
   assert.equal(await readFile(path.join(vaultDirectory, userPath), "utf8"), "Synthetic user inventory\n");
 }
