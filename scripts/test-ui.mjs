@@ -20,7 +20,7 @@ const vaultDirectory = await mkdtemp(path.join(tmpdir(), "food-assistant-ui-vaul
 const profileDirectory = await mkdtemp(path.join(tmpdir(), "food-assistant-ui-profile-"));
 const pluginId = "food-assistant-module";
 const pluginDirectory = path.join(vaultDirectory, ".obsidian", "plugins", pluginId);
-const debuggingPort = await getAvailablePort();
+let debuggingPort;
 const consoleMessages = [];
 let app;
 let obsidianProcess;
@@ -138,6 +138,7 @@ async function getAvailablePort() {
 }
 
 async function launchObsidian() {
+  debuggingPort = await getAvailablePort();
   obsidianProcess = spawn(
     executablePath,
     [
@@ -223,15 +224,17 @@ async function closeObsidian() {
     }
   }
   if (exited) {
-    const stopped = await Promise.race([exited.then(() => true), delay(5_000).then(() => false)]);
-    if (!stopped) {
-      try {
-        process.kill(process.platform === "win32" ? processId : -processId, "SIGKILL");
-      } catch (error) {
-        if (error?.code !== "ESRCH") throw error;
-      }
-      await Promise.race([exited, delay(5_000)]);
+    await Promise.race([exited, delay(5_000)]);
+  }
+  // AppImage's wrapper can exit before its Electron children. Never infer that
+  // the owned group is gone merely from the wrapper's exit event.
+  if (processId) {
+    try {
+      process.kill(process.platform === "win32" ? processId : -processId, "SIGKILL");
+    } catch (error) {
+      if (error?.code !== "ESRCH") throw error;
     }
+    if (exited) await Promise.race([exited, delay(5_000)]);
   }
   await Promise.race([app?.close().catch(() => undefined), delay(5_000)]);
   app = undefined;
