@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
-    "lint": "eslint src",
+    "lint": "eslint src scripts/test-ui.mjs",
     "test": "node --experimental-strip-types --import ./test/register-md-loader.mjs --test test/*.test.ts",
     "test:ui": "node scripts/test-ui.mjs",
     "check": "npm run lint && npm run test && npm run build"

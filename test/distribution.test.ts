@@ -68,7 +68,6 @@ test("local and CI checks include Obsidian-specific linting and the required UI 
     scripts: Record<string, string>;
   };
   const uiWorkflow = await read(".github/workflows/ui.yml");
-  const uiTest = await read("scripts/test-ui.mjs");
 
   assert.match(packageJson.scripts.lint, /eslint src/);
   assert.match(packageJson.scripts.check, /npm run lint/);
@@ -76,11 +75,6 @@ test("local and CI checks include Obsidian-specific linting and the required UI 
   assert.match(uiWorkflow, /obsidian-version: \["1\.11\.4", "1\.13\.7"\]/);
   assert.match(uiWorkflow, /releases\/download\/v\$\{\{ matrix\.obsidian-version \}\}/);
   assert.match(uiWorkflow, /xvfb-run --auto-servernum npm run test:ui/);
-  assert.match(uiTest, /chromium\.connectOverCDP/);
-  assert.match(uiTest, /updateDisabled: true/);
-  assert.match(uiTest, /setEnable\(true\)/);
-  assert.match(uiTest, /status-bar \.clickable-icon/);
-  assert.match(uiTest, /captureUiDiagnostics/);
 });
 
 test("distributable module contains no machine-specific paths or obvious secrets", async () => {

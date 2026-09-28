@@ -3,6 +3,13 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
+    files: ["scripts/test-ui.mjs"],
+    languageOptions: {
+      globals: { console: "readonly", document: "readonly", setTimeout: "readonly" }
+    },
+    rules: { "no-undef": "error" }
+  },
+  {
     files: ["src/**/*.ts"],
     languageOptions: {
       parser: tseslint.parser,

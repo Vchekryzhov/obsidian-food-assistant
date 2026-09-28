@@ -33,6 +33,7 @@ jobs:
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
           OBSIDIAN_UI_EXECUTABLE: ${{ runner.temp }}/Obsidian.AppImage
+          OBSIDIAN_UI_VERSION: ${{ matrix.obsidian-version }}
         run: xvfb-run --auto-servernum npm run test:ui
       - name: Upload UI diagnostics
         if: failure()
