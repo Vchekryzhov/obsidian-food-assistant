@@ -5,7 +5,7 @@ export default [
   {
     files: ["scripts/test-ui.mjs"],
     languageOptions: {
-      globals: { console: "readonly", document: "readonly", setTimeout: "readonly" }
+      globals: { console: "readonly", document: "readonly", navigator: "readonly", setTimeout: "readonly" }
     },
     rules: { "no-undef": "error" }
   },

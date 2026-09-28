@@ -55,6 +55,8 @@ try {
 
   stage = "settings visible";
   await assertSettingsVisible();
+  stage = "search both folder settings";
+  await assertSettingsSearch();
   stage = "persist dataRoot after restart";
   await updateFolderAndRestart("dataRoot", "  test/food-data  ", "test/food-data");
   stage = "persist moduleRoot after restart";
@@ -149,6 +151,7 @@ async function launchObsidian() {
   obsidianProcess.stderr.on("data", (data) => consoleMessages.push(data.toString()));
 
   const launched = await connectToObsidian();
+  app = launched;
   for (const context of launched.contexts()) {
     const observe = (page) => {
       page.on("console", (message) => consoleMessages.push(`${message.type()}: ${message.text()}`));
@@ -162,6 +165,7 @@ async function launchObsidian() {
   await launchedWindow.waitForFunction((expectedPath) =>
     window.app?.vault?.adapter?.getBasePath?.() === expectedPath,
   vaultDirectory);
+  window = launchedWindow;
   await launchedWindow.waitForFunction(() => /Obsidian v?\d+\.\d+\.\d+/.test(document.title));
   const runtimeVersion = (await launchedWindow.title()).match(/Obsidian v?(\d+\.\d+\.\d+)/)?.[1];
   consoleMessages.push(`Runtime: ${runtimeVersion}; debugging port: ${debuggingPort}`);
@@ -287,6 +291,24 @@ async function assertSettingsVisible() {
   await settingsWindow.getByRole("button", { name: "Составить меню", exact: true }).waitFor();
 }
 
+async function assertSettingsSearch() {
+  const supportsSearch = await window.evaluate(() => Boolean(window.app.setting.searchComponent));
+  if (!supportsSearch) {
+    assert.match(await window.title(), /Obsidian 1\.11\.4/, "Search is required on Obsidian 1.13+");
+    return;
+  }
+  const search = settingsWindow.locator(".setting-search-container input");
+  for (const key of ["dataRoot", "moduleRoot"]) {
+    const name = key === "dataRoot" ? "Папка данных" : "Папка инструкций";
+    const value = await folderInput(key).inputValue();
+    await search.fill(name);
+    await settingsWindow.locator(".setting-search-results").getByText(name, { exact: true }).click();
+    await folderInput(key).waitFor({ state: "visible" });
+    assert.equal(await folderInput(key).inputValue(), value);
+    await search.fill("");
+  }
+}
+
 function folderInput(key) {
   const name = key === "dataRoot" ? "Папка данных" : "Папка инструкций";
   return settingsWindow.locator(".setting-item").filter({
@@ -316,20 +338,68 @@ async function installFromSettings() {
   await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
   await settingsWindow.locator(".setting-item-description").filter({ hasText: /Готово:|Модуль уже актуален\.|Установлено:/ }).waitFor();
   await assert.doesNotReject(() => readFile(path.join(vaultDirectory, "test/food-data/Помощник по еде.md"), "utf8"));
+  await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
+  await settingsWindow.locator(".setting-item-description").filter({ hasText: "Модуль уже актуален." }).waitFor();
 }
 
 async function assertWeeklyMenuScenarios() {
+  await window.evaluate(() => {
+    window.__foodAssistantClipboard = { writes: [], reject: false };
+    window.__foodAssistantCopilotCalls = 0;
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          const state = window.__foodAssistantClipboard;
+          if (state.reject) throw new Error("Synthetic clipboard rejection");
+          state.writes.push(text);
+        }
+      }
+    });
+  });
+  assert.deepEqual(await window.evaluate(() => window.__foodAssistantClipboard.writes), []);
   await settingsWindow.getByRole("button", { name: "Составить меню", exact: true }).click();
-  await window.getByText(/Не удалось открыть Copilot Agent Chat/).waitFor();
+  await waitForNotice(/Не удалось открыть Copilot Agent Chat/);
+  const expectedPrompt = "Прочитай [[test/food-module]] и запусти режим составления меню на неделю. Сначала проведи короткое интервью.";
+  assert.deepEqual(await window.evaluate(() => window.__foodAssistantClipboard.writes), [expectedPrompt]);
 
   await window.evaluate(() => {
     window.app.commands.commands["copilot:new-agent-chat"] = {
       id: "copilot:new-agent-chat",
       name: "Test Copilot command",
-      callback: () => (window.__foodAssistantCopilotOpened = true)
+      callback: () => { window.__foodAssistantCopilotCalls += 1; }
     };
   });
-  await window.evaluate(() => window.app.commands.executeCommandById("food-assistant-module:start-weekly-menu"));
-  await window.getByText(/Agent Chat открыт/).waitFor();
-  assert.equal(await window.evaluate(() => window.__foodAssistantCopilotOpened), true);
+  assert.equal(await window.evaluate(() => window.app.commands.executeCommandById("food-assistant-module:start-weekly-menu")), true);
+  await window.waitForFunction(() => window.__foodAssistantCopilotCalls === 1);
+  await waitForNotice(/Agent Chat открыт\. Запрос скопирован/);
+  assert.deepEqual(await window.evaluate(() => window.__foodAssistantClipboard.writes), [expectedPrompt, expectedPrompt]);
+
+  await window.evaluate(() => { window.__foodAssistantClipboard.reject = true; });
+  assert.equal(await window.evaluate(() => window.app.commands.executeCommandById("food-assistant-module:start-weekly-menu")), true);
+  await window.waitForFunction(() => window.__foodAssistantCopilotCalls === 2);
+  await waitForNotice(/Agent Chat открыт\. Отправьте:/);
+  assert.deepEqual(await window.evaluate(() => window.__foodAssistantClipboard.writes), [expectedPrompt, expectedPrompt]);
+
+  await window.evaluate(() => {
+    window.__foodAssistantClipboard.reject = false;
+    window.app.setting.close();
+  });
+  await window.getByLabel("Составить меню на неделю", { exact: true }).click();
+  await window.waitForFunction(() => window.__foodAssistantCopilotCalls === 3);
+  await waitForNotice(/Agent Chat открыт\. Запрос скопирован/);
+  assert.deepEqual(await window.evaluate(() => window.__foodAssistantClipboard.writes), [expectedPrompt, expectedPrompt, expectedPrompt]);
+}
+
+async function waitForNotice(text) {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    for (const page of app.contexts().flatMap((context) => context.pages())) {
+      for (const frame of page.frames()) {
+        if (await frame.locator(".notice").filter({ hasText: text }).last().isVisible().catch(() => false)) return;
+      }
+    }
+    await delay(100);
+  }
+  throw new Error(`Obsidian did not display the expected notice: ${text}`);
 }
