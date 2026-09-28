@@ -5,11 +5,19 @@ export class ObsidianVaultWriter implements VaultWriter {
   constructor(private readonly vault: Vault) {}
 
   async exists(path: string): Promise<boolean> {
-    return this.vault.getAbstractFileByPath(normalizePath(path)) !== null;
+    const normalized = normalizePath(path);
+    if (isHiddenPath(normalized)) {
+      return this.vault.adapter.exists(normalized);
+    }
+    return this.vault.getAbstractFileByPath(normalized) !== null;
   }
 
   async read(path: string): Promise<string> {
-    const file = this.vault.getAbstractFileByPath(normalizePath(path));
+    const normalized = normalizePath(path);
+    if (isHiddenPath(normalized)) {
+      return this.vault.adapter.read(normalized);
+    }
+    const file = this.vault.getAbstractFileByPath(normalized);
     if (!(file instanceof TFile)) {
       throw new Error(`Expected a file at ${path}.`);
     }
@@ -18,6 +26,10 @@ export class ObsidianVaultWriter implements VaultWriter {
 
   async write(path: string, content: string): Promise<void> {
     const normalized = normalizePath(path);
+    if (isHiddenPath(normalized)) {
+      await this.vault.adapter.write(normalized, content);
+      return;
+    }
     const existing = this.vault.getAbstractFileByPath(normalized);
     if (existing instanceof TFile) {
       await this.vault.modify(existing, content);
@@ -31,8 +43,19 @@ export class ObsidianVaultWriter implements VaultWriter {
 
   async createFolder(path: string): Promise<void> {
     const normalized = normalizePath(path);
+    if (isHiddenPath(normalized)) {
+      if (!(await this.vault.adapter.exists(normalized))) {
+        await this.vault.adapter.mkdir(normalized);
+      }
+      return;
+    }
     if (this.vault.getAbstractFileByPath(normalized) === null) {
       await this.vault.createFolder(normalized);
     }
   }
+}
+
+function isHiddenPath(path: string): boolean {
+  // Vault indexes visible files only; installation state lives in a dot-folder.
+  return path.split("/").some((part) => part.startsWith("."));
 }

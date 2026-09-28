@@ -294,7 +294,7 @@ async function assertSettingsVisible() {
 async function assertSettingsSearch() {
   const supportsSearch = await window.evaluate(() => Boolean(window.app.setting.searchComponent));
   if (!supportsSearch) {
-    assert.match(await window.title(), /Obsidian 1\.11\.4/, "Search is required on Obsidian 1.13+");
+    assert.match(await window.title(), /Obsidian v?1\.11\.4/, "Search is required on Obsidian 1.13+");
     return;
   }
   const search = settingsWindow.locator(".setting-search-container input");
@@ -338,6 +338,9 @@ async function installFromSettings() {
   await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
   await settingsWindow.locator(".setting-item-description").filter({ hasText: /Готово:|Модуль уже актуален\.|Установлено:/ }).waitFor();
   await assert.doesNotReject(() => readFile(path.join(vaultDirectory, "test/food-data/Помощник по еде.md"), "utf8"));
+  await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
+  await settingsWindow.locator(".setting-item-description").filter({ hasText: "Модуль уже актуален." }).waitFor();
+  await restartObsidian();
   await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
   await settingsWindow.locator(".setting-item-description").filter({ hasText: "Модуль уже актуален." }).waitFor();
 }
