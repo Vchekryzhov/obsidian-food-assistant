@@ -103,7 +103,7 @@ async function captureUiDiagnostics() {
         .filter((control) => control.ariaLabel || control.title || control.text)
         .slice(-80);
       return {
-        runtimeVersion: window.require("obsidian").apiVersion,
+        applicationTitle: document.title,
         settingsCommandIds: Object.keys(window.app?.commands?.commands ?? {}).filter((commandId) => commandId.includes("settings")),
         settingMethods: Object.keys(window.app?.setting ?? {}),
         pluginDiscovered: Boolean(window.app?.plugins?.manifests?.[id]),
@@ -162,7 +162,8 @@ async function launchObsidian() {
   await launchedWindow.waitForFunction((expectedPath) =>
     window.app?.vault?.adapter?.getBasePath?.() === expectedPath,
   vaultDirectory);
-  const runtimeVersion = await launchedWindow.evaluate(() => window.require("obsidian").apiVersion);
+  await launchedWindow.waitForFunction(() => /Obsidian v?\d+\.\d+\.\d+/.test(document.title));
+  const runtimeVersion = (await launchedWindow.title()).match(/Obsidian v?(\d+\.\d+\.\d+)/)?.[1];
   consoleMessages.push(`Runtime: ${runtimeVersion}; debugging port: ${debuggingPort}`);
   if (process.env.OBSIDIAN_UI_VERSION) {
     assert.equal(runtimeVersion, process.env.OBSIDIAN_UI_VERSION, "Unexpected Obsidian runtime version");
