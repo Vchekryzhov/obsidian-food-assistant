@@ -348,7 +348,9 @@ async function installFromSettings() {
 }
 
 async function assertWeeklyMenuScenarios() {
-  await window.evaluate(() => window.electronWindow.focus());
+  // Bare Xvfb/CDP does not deliver native window focus events. Notify the real
+  // host listener before capturing its main-window clipboard object.
+  await window.evaluate(() => window.dispatchEvent(new Event("focus")));
   await window.waitForFunction(() => window.activeWindow === window);
   const clipboardStubInstalled = await window.evaluate(() => {
     window.__foodAssistantClipboard = { writes: [], reject: false };
