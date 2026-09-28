@@ -65,6 +65,8 @@ try {
   await installFromSettings();
   stage = "weekly menu actions";
   await assertWeeklyMenuScenarios();
+  stage = "managed updates and local file preservation";
+  await assertInstallOwnership();
   console.log("Obsidian UI scenarios passed.");
 } catch (error) {
   consoleMessages.push(`Failed stage: ${stage}`);
@@ -346,12 +348,14 @@ async function installFromSettings() {
 }
 
 async function assertWeeklyMenuScenarios() {
+  await window.bringToFront();
+  await window.waitForFunction(() => document.hasFocus());
   await window.evaluate(() => {
     window.__foodAssistantClipboard = { writes: [], reject: false };
     window.__foodAssistantCopilotCalls = 0;
-    // Obsidian owns a non-configurable navigator.clipboard getter and delegates
-    // writes to Electron. Stub that OS boundary, including across popout focus.
-    window.electron.clipboard.writeText = (text) => {
+    // Focus the main window before accessing the host's clipboard getter.
+    // Obsidian forwards this object's methods when a popout gains focus.
+    navigator.clipboard.writeText = async (text) => {
       const state = window.__foodAssistantClipboard;
       if (state.reject) throw new Error("Synthetic clipboard rejection");
       state.writes.push(text);
@@ -402,4 +406,36 @@ async function waitForNotice(text) {
     await delay(100);
   }
   throw new Error(`Obsidian did not display the expected notice: ${text}`);
+}
+
+async function assertInstallOwnership() {
+  await openPluginSettings();
+  const managedPath = "test/food-module.md";
+  const userPath = "test/food-data/Инвентарь.md";
+  const expectedInstructions = await readFile(path.join(vaultDirectory, managedPath), "utf8");
+
+  // Simulate a previously installed version, not a local edit. FNV-1a("a") is
+  // the known test vector e40c292c; the installer must read hidden ownership state.
+  await window.evaluate(async (managedPath) => {
+    const vault = window.app.vault;
+    await vault.modify(vault.getAbstractFileByPath(managedPath), "a");
+    const statePath = ".food-assistant/installed.json";
+    const state = JSON.parse(await vault.adapter.read(statePath));
+    state.packageVersion = "0.1.0";
+    state.managedFiles[managedPath] = "e40c292c";
+    await vault.adapter.write(statePath, JSON.stringify(state));
+  }, managedPath);
+  await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
+  await settingsWindow.getByText("Готово: создано 0, обновлено 1.", { exact: true }).waitFor();
+  assert.equal(await readFile(path.join(vaultDirectory, managedPath), "utf8"), expectedInstructions);
+
+  await window.evaluate(async ({ managedPath, userPath }) => {
+    const vault = window.app.vault;
+    await vault.modify(vault.getAbstractFileByPath(managedPath), "Synthetic local instructions\n");
+    await vault.modify(vault.getAbstractFileByPath(userPath), "Synthetic user inventory\n");
+  }, { managedPath, userPath });
+  await settingsWindow.getByRole("button", { name: "Установить / восстановить", exact: true }).click();
+  await settingsWindow.getByText(`Установлено: 0. Не перезаписаны изменённые файлы: ${managedPath}.`, { exact: true }).waitFor();
+  assert.equal(await readFile(path.join(vaultDirectory, managedPath), "utf8"), "Synthetic local instructions\n");
+  assert.equal(await readFile(path.join(vaultDirectory, userPath), "utf8"), "Synthetic user inventory\n");
 }
